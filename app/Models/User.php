@@ -2,31 +2,25 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    protected $table = 'tbl_user';
+    protected $primaryKey = 'user_id';
+    protected $fillable = ['role_id', 'name', 'email', 'organisation', 'password', 'status'];
+    protected $hidden = ['password', 'remember_token', 'failed_attempts', 'locked_until'];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return ['password' => 'hashed', 'locked_until' => 'datetime', 'last_login_at' => 'datetime'];
+    }
+
+    public function role() { return $this->belongsTo(Role::class, 'role_id'); }
+
+    public function can_($permission): bool
+    {
+        $perms = $this->role?->permissions ?? [];
+        return in_array('*', $perms, true) || in_array($permission, $perms, true);
     }
 }

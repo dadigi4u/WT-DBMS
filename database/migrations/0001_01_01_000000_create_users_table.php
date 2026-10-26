@@ -11,12 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+        Schema::create('tbl_role', function (Blueprint $table) {
+            $table->id('role_id');
+            $table->string('role_code', 30)->unique();
+            $table->string('role_name', 80);
+            $table->json('permissions');
+            $table->timestamps();
+        });
+
+        Schema::create('tbl_user', function (Blueprint $table) {
+            $table->id('user_id');
+            $table->foreignId('role_id')->constrained('tbl_role', 'role_id')->restrictOnDelete();
+            $table->string('name', 120);
+            $table->string('email', 150)->unique();
+            $table->string('organisation', 150)->nullable();
             $table->string('password');
+            $table->enum('status', ['active', 'suspended'])->default('active');
+            $table->unsignedTinyInteger('failed_attempts')->default(0);
+            $table->timestamp('locked_until')->nullable();
+            $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
@@ -42,7 +55,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('tbl_user');
+        Schema::dropIfExists('tbl_role');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
